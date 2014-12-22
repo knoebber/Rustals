@@ -1,0 +1,12 @@
+[package]
+
+name = "fractal"
+version = "0.0.1"
+authors = ["nicolas"]
+
+[dependencies.image]
+
+git = "https://github.com/PistonDevelopers/image"
+
+[dependencies.num]
+git="https://github.com/rust-lang/num.git"
