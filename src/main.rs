@@ -1,6 +1,6 @@
 
 
-extern crate num;
+//extern crate num;
 extern crate image;
 
 
@@ -10,6 +10,7 @@ use image::GenericImage;
 use image::ImageBuffer;
 use image::Luma;
 use std::os;
+
 const WIDTH: uint = 1000;
 const HEIGHT: uint = 1000;
 
@@ -80,6 +81,76 @@ fn draw_rect(pixels:&mut[u8], x:uint, y:uint, w:uint, h:uint)
 	}
 }
 
+
+/*
+Draws line from x0 y0 to x1 y1 
+with Bresenham's line algorithm
+Can go off screen without error. 
+*/
+fn draw_line(pixels:&mut[u8],x0:uint,y0:uint,x1:uint,y1:uint)
+{
+	let mut delta_x:f64 = (x1-x0) as f64;
+	let mut delta_y:f64 = (y1-y0) as f64;
+	if delta_x < 0.0 {delta_x *= -1.0;}
+	if delta_y < 0.0 {delta_y *=-1.0;}
+	let mut x = x0 as f64;
+	let mut y = y0 as f64;
+	let mut sx: f64;
+	let mut sy: f64;
+	let mut err:f64;
+	let mut index:uint;
+	if  x0 > x1 {sx = -1.0; }
+	else { sx= 1.0; }
+
+	if y0 > y1 {sy = -1.0; }
+	else { sy= 1.0; }
+
+	if delta_x > delta_y
+	{
+		err = (delta_x as f64)/2.0;
+		while x as int != x1 as int
+		{
+			index = get_index_i(x as int,y as int);
+			if index<WIDTH*HEIGHT
+			{
+				pixels[index]=255;
+			}
+			err -= delta_y;
+			if err < 0.0
+			{
+				y += sy;
+				err+= delta_x;
+			}
+			x+= sx;
+		}
+	}
+	else
+	{
+		err = delta_y  / 2.0;
+		while y as int != y1 as int
+		{
+			index = get_index_i(x as int,y as int);
+			if index<WIDTH*HEIGHT
+			{
+			 pixels[index]=255;
+			}
+
+			err-=delta_x as f64;
+			if err < 0.0
+			{
+				x += sx;
+				err += delta_y as f64;
+			}
+			y+= sy;
+		}
+		index = get_index_i(x as int,y as int);
+		if index<WIDTH*HEIGHT
+		{
+			pixels[index]=255;
+		}
+	}
+	
+}
 /*
 gets index for 1d array that uses 2d indexings
 */
@@ -119,10 +190,20 @@ fn circ_fractal(pixels:&mut[u8],x:int, y:int, radius:int)
 	{
 		circ_fractal(pixels,x+ (radius/2),y,(radius/2));
 		circ_fractal(pixels,x- (radius/2),y,radius/2);
-
 		circ_fractal(pixels,x,y+(radius/2),radius/2);
 		circ_fractal(pixels,x,y-(radius/2),radius/2);
 	}
+}
+
+fn line_fractal(pixels:&mut[u8],x:uint,y:uint)
+{
+	draw_line(pixels,x,y,0,0);
+	if x > 5 && y > 5
+	{
+		line_fractal(pixels, (x as f64 /3.0) as uint,y);
+		line_fractal(pixels,x,(y as f64 / 3.0) as uint);
+		line_fractal(pixels, (x as f64/ 3.0)as uint, (y as f64 /3.0) as uint);
+}
 }
 fn main() 
 {
@@ -141,12 +222,15 @@ fn main()
 	  }
 	  else if args[1] == "rec"
 	  {
-	  	rec_fractal(pixels,100,100,200)
+	  	rec_fractal(pixels,100,100,200);
 	  }
-
+	  else if args[1] == "tree" 
+	  {
+	  	line_fractal(pixels,500,500);
+	  }
 	  else
 	  {
-	  	panic!("argument 1 must be: rec || circ ")
+	  	panic!("argument 1 must be: rec || circ || tree ")
 	  }
 	}
 	if args.len()>2
